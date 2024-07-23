@@ -1,41 +1,41 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
-import os
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'supersecretkey')
+app.config['SECRET_KEY'] = 'secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/ramabook.sqlite'
+db = SQLAlchemy(app)
 
-def init_db():
-    with sqlite3.connect('database.db') as conn:
-        conn.execute('''CREATE TABLE IF NOT EXISTS comments
-                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT NOT NULL,
-                        comment TEXT NOT NULL);''')
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    text = db.Column(db.String(500), nullable=False)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         username = request.form['username']
-        comment = request.form['comment']
-        session['username'] = username  # Save username in session
-        with sqlite3.connect('database.db') as conn:
-            conn.execute('INSERT INTO comments (username, comment) VALUES (?, ?)', (username, comment))
-        return redirect(url_for('index'))
-    
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        cur.execute('SELECT id, username, comment FROM comments ORDER BY id DESC')
-        comments = cur.fetchall()
-    
-    return render_template('index.html', comments=comments, username=session.get('username'))
+        text = request.form['comment']
+        if username and text:
+            new_comment = Comment(username=username, text=text)
+            db.session.add(new_comment)
+            db.session.commit()
+            flash('Comment added successfully!', 'success')
+        else:
+            flash('Both fields are required!', 'danger')
+        return redirect(url_for('index', username=username))
 
-@app.route('/delete/<int:id>')
-def delete_comment(id):
-    with sqlite3.connect('database.db') as conn:
-        conn.execute('DELETE FROM comments WHERE id = ?', (id,))
-    return redirect(url_for('index'))
+    username = request.args.get('username', '')
+    comments = Comment.query.order_by(Comment.id.desc()).all()
+    return render_template('index.html', comments=comments, username=username)
+
+@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
+def delete_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    return jsonify({'result': 'success'})
 
 if __name__ == '__main__':
-    init_db()
-    # Debug mode should be off for production
-    app.run(debug=False)
+    db.create_all()
+    app.run(debug=True)

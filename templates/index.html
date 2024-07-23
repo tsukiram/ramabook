@@ -4,29 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ramabook</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Ramabook</h1>
+        <h1>Ramabook</h1>
         <div class="post">
-            <h2>Dummy Post</h2>
-            <p>This is a dummy post for testing comments.</p>
-            <form action="/" method="POST">
-                <input type="text" name="username" placeholder="Enter your name" value="{{ username }}" required>
-                <textarea name="comment" placeholder="Enter your comment" required></textarea>
+            <h2>Post Title</h2>
+            <p>This is a dummy post to teach children about positive comments on social media.</p>
+        </div>
+        <div class="comments-section">
+            <h3>Comments</h3>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+            <form action="{{ url_for('index') }}" method="POST">
+                <input type="text" name="username" placeholder="Your Name" value="{{ username }}">
+                <textarea name="comment" placeholder="Write your comment..."></textarea>
                 <button type="submit">Comment</button>
             </form>
-        </div>
-        <div class="comments">
-            <h3>Comments</h3>
-            {% for id, username, comment in comments %}
-                <div class="comment">
-                    <p><strong>{{ username }}:</strong> {{ comment }}</p>
-                    <a href="{{ url_for('delete_comment', id=id) }}" class="delete-btn">🗑️</a>
-                </div>
-            {% endfor %}
+            <div class="comments-list">
+                {% for comment in comments %}
+                    <div class="comment" id="comment-{{ comment.id }}">
+                        <div class="comment-text">
+                            <strong>{{ comment.username }}</strong>: {{ comment.text }}
+                        </div>
+                        <button class="delete-btn" data-id="{{ comment.id }}">🗑️</button>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 </body>
 </html>
