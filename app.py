@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
+import os
 
 app = Flask(__name__)
-app.secret_key = 'supersecretkey'
+app.secret_key = os.getenv('SECRET_KEY', 'supersecretkey')
 
 def init_db():
     with sqlite3.connect('database.db') as conn:
@@ -36,4 +37,5 @@ def delete_comment(id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    # Debug mode should be off for production
+    app.run(debug=False)
