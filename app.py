@@ -29,6 +29,22 @@ def index():
     comments = Comment.query.order_by(Comment.id.desc()).all()
     return render_template('index.html', comments=comments, username=username)
 
+@app.route('/add_comment', methods=['POST'])
+def add_comment():
+    username = request.form['username']
+    text = request.form['comment']
+    if username and text:
+        new_comment = Comment(username=username, text=text)
+        db.session.add(new_comment)
+        db.session.commit()
+        return jsonify({
+            'id': new_comment.id,
+            'username': new_comment.username,
+            'text': new_comment.text
+        })
+    else:
+        return jsonify({'error': 'Both fields are required!'}), 400
+
 @app.route('/delete_comment/<int:comment_id>', methods=['POST'])
 def delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)

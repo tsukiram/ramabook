@@ -23,12 +23,12 @@
                 {% endfor %}
               {% endif %}
             {% endwith %}
-            <form action="{{ url_for('index') }}" method="POST">
+            <form id="comment-form" method="POST">
                 <input type="text" name="username" placeholder="Your Name" value="{{ username }}">
                 <textarea name="comment" placeholder="Write your comment..."></textarea>
                 <button type="submit">Comment</button>
             </form>
-            <div class="comments-list">
+            <div class="comments-list" id="comments-list">
                 {% for comment in comments %}
                     <div class="comment" id="comment-{{ comment.id }}">
                         <div class="comment-text">
