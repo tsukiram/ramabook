@@ -1,4 +1,21 @@
 $(document).ready(function() {
+    const socket = io();
+
+    socket.on('new_comment', function(data) {
+        const newComment = `
+            <div class="comment" id="comment-${data.id}">
+                <div class="comment-text">
+                    <strong>${data.username}</strong>: ${data.text}
+                </div>
+                <button class="delete-btn" data-id="${data.id}">🗑️</button>
+            </div>`;
+        $('#comments-list').prepend(newComment);
+    });
+
+    socket.on('delete_comment', function(data) {
+        $(`#comment-${data.id}`).remove();
+    });
+
     $('.delete-btn').on('click', function() {
         const commentId = $(this).data('id');
         $.ajax({
@@ -21,14 +38,6 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (!response.error) {
-                    const newComment = `
-                        <div class="comment" id="comment-${response.id}">
-                            <div class="comment-text">
-                                <strong>${response.username}</strong>: ${response.text}
-                            </div>
-                            <button class="delete-btn" data-id="${response.id}">🗑️</button>
-                        </div>`;
-                    $('#comments-list').prepend(newComment);
                     $('input[name="username"]').val(response.username);
                     $('textarea[name="comment"]').val('');
                 }

@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/ramabook.sqlite'
 db = SQLAlchemy(app)
+socketio = SocketIO(app, async_mode='eventlet')
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -37,6 +39,11 @@ def add_comment():
         new_comment = Comment(username=username, text=text)
         db.session.add(new_comment)
         db.session.commit()
+        emit('new_comment', {
+            'id': new_comment.id,
+            'username': new_comment.username,
+            'text': new_comment.text
+        }, broadcast=True)
         return jsonify({
             'id': new_comment.id,
             'username': new_comment.username,
@@ -50,8 +57,9 @@ def delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     db.session.delete(comment)
     db.session.commit()
+    emit('delete_comment', {'id': comment.id}, broadcast=True)
     return jsonify({'result': 'success'})
 
 if __name__ == '__main__':
     db.create_all()
-    app.run(debug=True)
+    socketio.run(app, debug=True)
